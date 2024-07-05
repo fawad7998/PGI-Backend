@@ -1,0 +1,524 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model UserCredientials {
+  user_id   Int      @id @default(autoincrement())
+  profileId Int      @unique
+  profile   Profile? @relation(fields: [profileId], references: [profile_id])
+  token     String?  @default("")
+  email     String
+  password  String
+}
+
+///////////////////////////////////////////////////////
+// Model: Organization
+///////////////////////////////////////////////////////
+
+model Organization {
+  organization_id Int             @id @default(autoincrement()) // Primary key with auto-increment
+  name            String // Name of the organization
+  businessEmail   String          @unique // Description of the organization
+  companyName     String // One-to-many relation with Securityguard
+  phoneNumber     Int
+  password        String          @default("")
+  token           String          @default("")
+  profiles        Profile[] // One-to-many relation with Profile
+  InternalNotes   InternalNotes[]
+}
+
+///////////////////////////////////////////////////////
+// Model: Invitation
+///////////////////////////////////////////////////////
+model Invitation {
+  invitation_id Int     @id @default(autoincrement())
+  email         String
+  isSent        Boolean
+  isAccepted    Boolean
+  isRejected    Boolean
+}
+
+///////////////////////////////////////////////////////
+// Model: Profile
+///////////////////////////////////////////////////////
+model Profile {
+  profile_id            Int               @id @default(autoincrement())
+  id                    Int               @unique
+  user                  UserCredientials?
+  firstName             String
+  lastName              String
+  employmentType        String            @default("Standard")
+  contractNo            Int
+  contractStartTime     String
+  contractEndTime       String
+  Position              Position[]
+  isAccessToStaffPortal Boolean           @default(false)
+  mobileNo              String
+  streetName            String
+  apartmentNo           Int
+  houseNo               Int
+  postCode              Int
+  city                  String
+  country               String
+  role                  Role?
+  gender                Gender            @default(Male)
+  dob                   String
+  nationality           String
+  image                 String?
+  cityOfBirth           String
+  countryOfBirth        String
+  nINo                  Int
+  absences              Absences[]
+  isSecurityGuard       Boolean           @default(false)
+  isDrivingLicense      Boolean           @default(false)
+  isVisaRequired        Boolean           @default(false)
+  visaDescription       String?
+  visaExpiryDate        String?
+  organization          Organization?     @relation(fields: [organizationId], references: [organization_id])
+  organizationId        Int?
+  isTwoStepFactorAuth   Boolean           @default(false)
+  securityGuardId       Int?              @unique
+  securityGuard         Securityguard?    @relation(fields: [securityGuardId], references: [s_id])
+  internalNotes         InternalNotes[]
+  isDeleted             Boolean?          @default(false)
+  isApproved            Boolean?          @default(false)
+  isRejected            Boolean?          @default(false)
+  geoOffence            GeoOffencing[]
+  createdAt             DateTime?         @default(now())
+  updatedAt             DateTime?         @updatedAt
+}
+
+model GeoOffencing {
+  geoOffence_id Int      @id @default(autoincrement())
+  profileId     Int
+  profile       Profile  @relation(fields: [profileId], references: [profile_id])
+  lattitude     Float
+  radius        Float
+  longitude     Float
+  timestamp     DateTime @default(now())
+  status        String
+}
+
+model Securityguard {
+  s_id             Int            @id @default(autoincrement())
+  emergencyContact String
+  qualification    String
+  certification    String
+  availabilities   Availability[]
+  schedule         Schedule[]
+  liveTracking     LiveTracking[]
+  report           Report[]
+  documents        Documents[]
+  payroll          Payroll[]
+  forms            Forms[]
+  profile          Profile?
+  isActive         Boolean        @default(false)
+}
+
+///////////////////////////////////////////////////////
+// Model: Location
+///////////////////////////////////////////////////////
+model Location {
+  location_id   Int           @id @default(autoincrement())
+  clientName    String?
+  locationName  String
+  locationId    Int           @unique
+  streetAddress String
+  city          String
+  postCode      Int
+  state         String
+  country       String
+  directions    String?
+  clients       Client[]
+  shift         Shifts[]
+  applyTo       ApplyTo[]
+  documents     Documents[]
+  pattern       shiftPattern?
+}
+
+///////////////////////////////////////////////////////
+// Model: Client
+///////////////////////////////////////////////////////
+model Client {
+  client_id            Int         @id @default(autoincrement())
+  clientId             Int         @unique
+  image                String?     @default("")
+  clientPersonName     String
+  title                String
+  contactPersonName    String
+  contactPersonEmail   String
+  phoneNumber          Int?
+  jobTitle             String?
+  isClientPortalAccess Boolean     @default(false)
+  clientEmail          String
+  clientPhoneNumber    Int
+  regNo                Int
+  vatNo                Int
+  website              String
+  sectors              String
+  addressLine          String
+  city                 String
+  postCode             Int
+  county               String
+  country              String
+  documents            Documents[]
+  locationId           Int?        @unique
+  location             Location?   @relation(fields: [locationId], references: [location_id])
+}
+
+///////////////////////////////////////////////////////
+// Model: Documents
+///////////////////////////////////////////////////////
+
+model Documents {
+  document_id     Int            @id @default(autoincrement()) // Primary key with auto-increment
+  fileName        String // Name of the file
+  fileUrl         String // URL of the file
+  description     String?
+  locationId      Int?
+  location        Location?      @relation(fields: [locationId], references: [location_id])
+  cloudinary_id   String
+  securityGuardId Int? // Security guard ID
+  securityGuard   Securityguard? @relation(fields: [securityGuardId], references: [s_id])
+  clientId        Int?
+  client          Client?        @relation(fields: [clientId], references: [client_id])
+}
+
+///////////////////////////////////////////////////////
+// Model: InternalNotes
+///////////////////////////////////////////////////////
+// model InternalNotes {
+//   note_id          Int           @id @default(autoincrement())
+//   description      String
+//   ownerId          Int
+//   owner            Organization? @relation(fields: [ownerId], references: [organization_id])
+//   Profile          Profile?      @relation(fields: [clientProfile_id], references: [profile_id])
+//   clientProfile_id Int?
+// }
+
+///////////////////////////////////////////////////////
+// Model: Role
+///////////////////////////////////////////////////////
+model Role {
+  role_id   Int      @id @default(autoincrement()) // Primary key with auto-increment
+  role_type String   @unique
+  profileId Int?     @unique // Unique profile ID
+  profile   Profile? @relation(fields: [profileId], references: [profile_id]) // One-to-one relation with Profile
+}
+
+model payRunSchedule {
+  payRunSchedule_id   Int      @id @default(autoincrement())
+  name                String
+  periodLength        Int?
+  isWeek              Boolean? @default(false)
+  paySchedulestartDay String?
+  scheduleActiveDate  String
+  employmentType      String?  @default("Standard")
+  isMonth             Boolean? @default(false)
+  startDayOfMonth     Int?
+  islastDayOfMonth    Boolean? @default(false)
+  lastDayofMonth      Int?
+  isCustom            Boolean? @default(false)
+  fromPeriodTime      Json?
+  toPeriodTime        Json?
+}
+
+///////////////////////////////////////////////////////
+// Model: PayRule
+///////////////////////////////////////////////////////
+model PayRule {
+  pay_rule_id Int       @id @default(autoincrement())
+  Isfixed     Boolean   @default(false)
+  Ishourly    Boolean   @default(true)
+  payRate     Float
+  payCode     Int
+  conditions  Json
+  appliesTo   ApplyTo[]
+}
+
+///////////////////////////////////////////////////////
+// Model: Bridge Table For Apply To
+///////////////////////////////////////////////////////
+model ApplyTo {
+  applyTo_id       Int           @id @default(autoincrement())
+  payRuleId        Int
+  payRule          PayRule       @relation(fields: [payRuleId], references: [pay_rule_id])
+  positionId       Int?
+  clientId         Int?
+  locationId       Int?
+  eventId          Int?
+  profileId        Int?
+  subConductorId   Int?
+  employmentTypeId Int?
+  position         Position?     @relation(fields: [positionId], references: [position_id])
+  event            Event?        @relation(fields: [eventId], references: [event_id])
+  location         Location?     @relation(fields: [locationId], references: [location_id])
+  subconductor     SubConductor? @relation(fields: [subConductorId], references: [subConductor_id])
+}
+
+///////////////////////////////////////////////////////
+// Model: Bridge Table For Apply To
+///////////////////////////////////////////////////////
+model Position {
+  position_id  Int       @id @default(autoincrement())
+  positionName String
+  profileId    Int?
+  profile      Profile?  @relation(fields: [profileId], references: [profile_id])
+  shiftId      Int?
+  shift        Shifts?   @relation(fields: [shiftId], references: [shift_id])
+  applyTo      ApplyTo[]
+}
+
+model Event {
+  event_id  Int       @id @default(autoincrement())
+  eventName String
+  applyTo   ApplyTo[]
+}
+
+model SubConductor {
+  subConductor_id  Int       @id @default(autoincrement())
+  subConductorName String
+  applyTo          ApplyTo[]
+}
+
+///////////////////////////////////////////////////////
+// Model: Payroll
+///////////////////////////////////////////////////////
+
+model Payroll {
+  payroll_id      Int            @id @default(autoincrement()) // Primary key with auto-increment
+  pay_amount      Int // Amount of the payroll
+  payment_month   String // Month of the payment
+  isRecieved      Boolean        @default(false) // Payment received status
+  securityGuard   Securityguard? @relation(fields: [securityGuardId], references: [s_id]) // Optional one-to-one relation with Securityguard
+  securityGuardId Int // Security guard ID
+  absences        Absences[] // One-to-many relation with Absences
+}
+
+///////////////////////////////////////////////////////
+// Model: Absences
+///////////////////////////////////////////////////////
+
+model Absences {
+  absences_id       Int      @id @default(autoincrement())
+  profile           Profile? @relation(fields: [profileId], references: [profile_id])
+  absenceType       String
+  isPaid            Boolean
+  startingDate      String // Date of absence
+  endingDate        String
+  comment           String?
+  daysOfHolidays    Int      @default(1)
+  allowedHolidays   Int      @default(28)
+  takenAbsences     Int      @default(0)
+  remainingHolidays Int      @default(0)
+  profileId         Int?
+  payrollId         Int? // Payroll ID
+  payroll           Payroll? @relation(fields: [payrollId], references: [payroll_id]) // Optional one-to-one relation with Payroll
+}
+
+///////////////////////////////////////////////////////
+// Model: shiftPattern
+///////////////////////////////////////////////////////
+
+model shiftPattern {
+  pattern_id                 Int      @id @default(autoincrement()) // Primary key with auto-increment
+  patternName                String   @default("") // Enum type for shift day
+  patternType                String // weekly , On/Off , specific days of month , last day of month 
+  isWeekly                   Boolean? @default(false)
+  repeatWeekNum              Int?     @default(0)
+  isOnAndOff                 Boolean? @default(false)
+  lengthDays                 Int?     @default(0)
+  isSpecificMonth            Boolean? @default(false)
+  days                       Int?     @default(0)
+  repeatMonth                Int?     @default(0) // used for isSpecific Month or isLastDayOfMonth true  
+  isLastDayOfMonth           Boolean? @default(false)
+  periodStartingDate         String
+  periodEndingDate           String
+  isAppliedOnBankHolidays    Boolean? @default(false)
+  isAutoExtend               Boolean? @default(false)
+  autoExtendMonth            Int?
+  autoExtendDaysBeforePeriod Int?     @default(7)
+  periodStartingTime         String
+  periodEndingTime           String
+  isCancelled                Boolean? @default(false)
+  cancelledId                Int?     @unique
+  shiftInstruction           String?
+  locationId                 Int      @unique
+  Location                   Location @relation(fields: [locationId], references: [location_id])
+}
+
+///////////////////////////////////////////////////////
+// Model: Shift
+///////////////////////////////////////////////////////
+model Shifts {
+  shift_id     Int        @id @default(autoincrement())
+  startingTime String
+  endTime      String
+  locationId   Int        @unique
+  location     Location?  @relation(fields: [locationId], references: [location_id])
+  position     Position[]
+}
+
+///////////////////////////////////////////////////////
+// Model: Forms
+///////////////////////////////////////////////////////
+
+model Forms {
+  form_id         Int            @id @default(autoincrement()) // Primary key with auto-increment
+  form_name       String // Name of the form
+  form_extension  String // Extension of the form
+  form_template   Json // Template data in JSON format
+  securityGuardId Int // Security guard ID
+  securityGuard   Securityguard? @relation(fields: [securityGuardId], references: [s_id]) // Optional one-to-one relation with Securityguard
+}
+
+///////////////////////////////////////////////////////
+// Model: Availability
+///////////////////////////////////////////////////////
+
+model Availability {
+  availability_id Int            @id @default(autoincrement()) // Primary key with auto-increment
+  status          String // Status of availability
+  startTime       String // Start time of availability
+  endTime         String // End time of availability
+  securityGuard   Securityguard? @relation(fields: [securityGuardId], references: [s_id]) // Optional one-to-one relation with Securityguard
+  securityGuardId Int // Security guard ID
+}
+
+///////////////////////////////////////////////////////
+// Model: Schedule
+///////////////////////////////////////////////////////
+
+model Schedule {
+  schedule_id     Int            @id @default(autoincrement()) // Primary key with auto-increment
+  shiftType       String // Type of the shift
+  startTime       String // Start time of the shift
+  endTime         String // End time of the shift
+  breakPeriods    Breakperiod[] // One-to-many relation with Breakperiod
+  securityGuardId Int // Security guard ID
+  securityGuard   Securityguard? @relation(fields: [securityGuardId], references: [s_id]) // Optional one-to-one relation with Securityguard
+}
+
+///////////////////////////////////////////////////////
+// Model: Breakperiod
+///////////////////////////////////////////////////////
+
+model Breakperiod {
+  breakperiod_id Int       @id @default(autoincrement()) // Primary key with auto-increment
+  startTime      String // Start time of the break period
+  endTime        String // End time of the break period
+  scheduleId     Int // Schedule ID
+  schedule       Schedule? @relation(fields: [scheduleId], references: [schedule_id]) // Optional one-to-one relation with Schedule
+}
+
+///////////////////////////////////////////////////////
+// Model: LiveTracking
+///////////////////////////////////////////////////////
+
+model LiveTracking {
+  livetracking_id Int            @id @default(autoincrement()) // Primary key with auto-increment
+  areaAddress     String // Address of the area
+  timestramp      String // Timestamp of the live tracking
+  latitude        Latitude[] // One-to-many relation with Latitude
+  longitude       Longitude[] // One-to-many relation with Longitude
+  securityGuardId Int // Security guard ID
+  securityGuard   Securityguard? @relation(fields: [securityGuardId], references: [s_id]) // Optional one-to-one relation with Securityguard
+}
+
+///////////////////////////////////////////////////////
+// Model: Latitude
+///////////////////////////////////////////////////////
+
+model Latitude {
+  latitude_id    Int          @id @default(autoincrement()) // Primary key with auto-increment
+  value          Float // Latitude value
+  liveTrackingId Int // Live tracking ID
+  liveTracking   LiveTracking @relation(fields: [liveTrackingId], references: [livetracking_id]) // One-to-one relation with LiveTracking
+}
+
+///////////////////////////////////////////////////////
+// Model: Longitude
+///////////////////////////////////////////////////////
+
+model Longitude {
+  longitude_id   Int          @id @default(autoincrement()) // Primary key with auto-increment
+  value          Float // Longitude value
+  liveTrackingId Int // Live tracking ID
+  liveTracking   LiveTracking @relation(fields: [liveTrackingId], references: [livetracking_id]) // One-to-one relation with LiveTracking
+}
+
+///////////////////////////////////////////////////////
+// Model: Report
+///////////////////////////////////////////////////////
+
+model Report {
+  report_id       Int            @id @default(autoincrement()) // Primary key with auto-increment
+  type            String // Type of the report
+  generatedAt     String // Generated timestamp
+  description     String // Description of the report
+  securityGuardId Int // Security guard ID
+  securityGuard   Securityguard? @relation(fields: [securityGuardId], references: [s_id]) // Optional one-to-one relation with Securityguard
+}
+
+///////////////////////////////////////////////////////
+// Enum: PayrollType
+///////////////////////////////////////////////////////
+
+enum PayrollType {
+  Biweekly
+  CustomPaySchedule
+  Monthly
+  Weekly
+}
+
+///////////////////////////////////////////////////////
+// Enum: Days
+///////////////////////////////////////////////////////
+
+enum Days {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+// ///////////////////////////////////////////////////////
+// // enum: Position
+// ///////////////////////////////////////////////////////
+// enum Positions {
+//   DoorSupervisor
+//   DutyManager
+//   EventSteward
+//   OperationsManager
+//   SecurityOfficer
+// }
+
+enum Gender {
+  Female
+  Male
+  NonBinary
+  Undisclosed
+}
+
+// ///////////////////////////////////////////////////////
+// // : InternalNotes
+// ///////////////////////////////////////////////////////
+
+model InternalNotes {
+  internalNotes_id            Int           @id @default(autoincrement())
+  profile_Id                  Int
+  description                 String
+  owner_Id                    Int
+  Organization                Organization? @relation(fields: [organizationOrganization_id], references: [organization_id])
+  organizationOrganization_id Int?
+  Profile                     Profile?      @relation(fields: [profileProfile_id], references: [profile_id])
+  profileProfile_id           Int?
+}
